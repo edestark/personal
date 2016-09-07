@@ -1,0 +1,234 @@
+#!/bin/bash
+#
+# Script para manter tipos de equipamentos/acessórios
+# 
+#
+trap 'menu'  1 2 3 15 20
+ARQQ=/temp/sismat/tipos.dat
+ARQT=/temp/sismat/tiposmat.dat
+cab() {
+clear
+echo -e "Sistema de Cadastros - SISMAT"
+echo -e "\033[1mCadastro de Tipos de Equipamentos\033[0m\n"
+}
+cab_lista() {
+cab
+echo -e "Lista de Tipos de Equipamentos Cadastrados"
+tput cup 4 0; echo "---------------------------------------------------------------------"
+tput cup 5 0; echo "Codigo   Nome do Tipo de Material       Descricao                    "
+tput cup 6 0; echo "---------------------------------------------------------------------"
+}
+cab_listamin() {
+cab
+echo -e "Lista de Tipos de Equipamentos Cadastrados"
+tput cup 4 50; echo "------------------------------------"
+tput cup 5 50; echo "Codigo  Nome do Tipo de Material    "
+tput cup 6 50; echo "------------------------------------"
+}
+
+#
+#####
+# Menu do sistema
+#
+menu() {
+cab
+echo -e "[ 1 ] Cadastra Novo Tipo Equipamento"
+echo -e "[ 2 ] Listar Tipos Equipamentos cadastrados"
+echo -e "[ 3 ] Alterar Tipo Equipamento"
+echo -e "[ 4 ] Exclui Tipo Equipamento\n"
+read -n 1 -p "Opcao: <Enter=Retorna>" opc
+[ "x$opc" == "x" ] && clear && echo -e "\nSistema encerrado!\n" && exit 1
+case $opc in
+   1) cad_tipo
+      ;;
+   2) lista_tipos
+      ;;
+   3) altera_tipo
+      ;;
+   4) exclui_tipo
+      ;;
+   *) menu
+      ;;
+esac
+}
+#
+#############
+# Cadastra tipos
+#############
+#
+cad_tipo() {
+cab
+echo -e "Cadastra Novo Tipo"
+tput cup 4 0; echo "---------------------------------------------------------------------"
+tput cup 5 0; echo "Nome do Tipo de Material:                             <Enter=retorna>"
+tput cup 6 0; echo "Descricao do Tipo.......:                                            "
+tput cup 7 0; echo "---------------------------------------------------------------------"
+tput cup 5 26 ; read NOMET
+[ "x$NOMET" == "x" ] && menu
+cut -f2 -d":" $ARQQ | grep "$NOMET" 1>/dev/null 2>/dev/null
+[ $? -eq 0 ] && tput cup 9 0 && read -n 1 -p "Nome do Tipo ja cadastrado!" AB && cad_tipo
+tput cup 6 26; read DESCT
+[ "x$DESCT" == "x" ] && tput cup 9 0 && read -n 1 -p "Descricao invalida!" AB && cad_tipo
+tput cup 8 0; read -n 1 -p "Confirma <s/n>? " SN
+xn=$(echo $SN | tr [:upper:] [:lower:])
+[ ! "$xn" == "s" ] && cad_tipo
+CMAX=$(cut -f1 -d":" $ARQQ | sort | tail -1)
+[ "x$CMAX" == "x" ] && CMAX=0
+let CMAX++
+echo "${CMAX}:${NOMET}:${DESCT}" >> $ARQQ
+[ $? -gt 0 ] && tput cup 9 0 && read -n 1 -p "Erro grave cadastrar tipo, verifique!" ab && cad_tipo
+tput cup 9 0; read -n 1 -p "Novo Tipo de Material cadastrado com sucesso!" ab
+cad_tipo
+}
+#
+#
+#############
+# Lista tipos
+#############
+#
+lista_tipos() {
+cab_lista
+NL=$(tput lines)
+let NL=NL-6
+NR=7
+REG=$(sed "/^#/d" $ARQQ | sort -n | tr " " "_")
+for i in $REG
+ do
+  CT=$(echo $i | cut -f1 -d":"| tr "_" " ")
+  TP=$(echo $i | cut -f2 -d":"| tr "_" " ")
+  DE=$(echo $i | cut -f3 -d":"| tr "_" " ")
+  tput cup $NR 2; echo ${CT}
+  tput cup $NR 9; echo ${TP:0:28}
+  tput cup $NR 40; echo ${DE:0:38}
+  let NR++ 
+  if [ $NR -eq $NL ]
+   then
+     NR=7
+     read -n 1 -p "Tecle p/continuar..."
+     cab_lista
+  fi
+done
+read -n 1 -p "Tecle p/continuar..."
+menu
+}
+#############
+# Lista tipos_min
+#############
+#
+lista_tipos_min() {
+cab_listamin
+NL=$(tput lines)
+let NL=NL-6
+NR=7
+REG=$(sed "/^#/d" $ARQQ | sort -n | tr " " "_")
+for i in $REG
+ do
+  CT=$(echo $i | cut -f1 -d":"| tr "_" " ")
+  TP=$(echo $i | cut -f2 -d":"| tr "_" " ")
+  tput cup $NR 50; echo ${CT}
+  tput cup $NR 58; echo ${TP:0:25}
+  let NR++ 
+  if [ $NR -eq $NL ]
+   then
+     NR=7
+     tput cup $NR 50; read -n 1 -p "Tecle p/continuar..."
+     cab_listamin
+  fi
+done
+tput cup $NR 50; read -n 1 -p "Tecle p/continuar..."
+}
+#
+#
+#############
+# Altera tipo
+#############
+#
+altera_tipo() {
+cab
+echo -e "Altera Tipo de Equipamento Cadastrado"
+tput cup 4 0; echo "---------------------------------------------------------------------"
+tput cup 5 0; echo "Codigo do Tipo de Material:                                          "
+tput cup 6 0; echo "Nome do Tipo de Material..:                                          "
+tput cup 7 0; echo "Descricao do Tipo.........:                                          "
+tput cup 8 0; echo "---------------------------------------------------------------------"
+tput cup 9 0; echo "< Enter=retorna > - < xx + Enter =  Lista tipos >                    "
+tput cup 10 0; echo "---------------------------------------------------------------------"
+tput cup 5 29 ; read CODT
+[ "x$CODT" == "x" ] && menu
+[ "$CODT" == "xx" ] && lista_tipos_min && altera_tipo
+cut -f1 -d":" $ARQQ | grep "$CODT"| head -1 1>/dev/null 2>/dev/null
+[ $? -gt 0 ] && tput cup 11 0 && read -n 1 -p "Tipo nao cadastrado!" AB && altera_tipo
+NOMET=$(grep -e "^$CODT" $ARQQ | cut -f2 -d":" | head -1)
+tput cup 6 26; echo $NOMET
+DESCT=$(grep -e "^$CODT" $ARQQ | cut -f3 -d":" | head -1)
+tput cup 7 26; echo $DESCT
+tput cup 11 0; echo "Novo Tipo de Material..:                                             "
+tput cup 12 0; echo "Nova Descricao do Tipo.:                                             "
+tput cup 13 0; echo "---------------------------------------------------------------------"
+tput cup 14 0; echo "< Enter=retorna >                                                    "
+tput cup 15 0; echo "---------------------------------------------------------------------"
+tput cup 11 26 ; read NOMETN
+[ "x$NOMETN" == "x" ] && altera_tipo
+cut -f2 -d":" $ARQQ | grep "$NOMETN" 1>/dev/null 2>/dev/null
+[ $? -eq 0 ] && tput cup 16 0 && read -n 1 -p "Tipo ja cadastrado!" AB && altera_tipo
+tput cup 12 26; read DESCTN
+[ "x$DESCTN" == "x" ] && tput cup 16 0 && read -n 1 -p "Descricao invalida!" AB && altera_tipo
+tput cup 16 0; read -n 1 -p "Confirma <s/n>? " SN
+SN=$(echo $SN | tr [:upper:] [:lower:])
+[ $SN != "s" ] && altera_tipo
+cat $ARQQ | sed "/$CODT:$NOMET:$DESCT/d" > $ARQQ.$$
+echo "$CODT:${NOMETN}:${DESCTN}" >> $ARQQ.$$
+[ $? -gt 0 ] && tput cup 16 0 && read -n 1 -p "Erro grave ao alterar tipo, verifique!" ab && altera_tipo
+cat $ARQQ.$$ | sort -n > $ARQQ
+[ $? -gt 0 ] && tput cup 16 0 && read -n 1 -p "Erro grave ao alterar tipo, verifique!" ab && altera_tipo
+rm -rf $ARQQ.$$ 1>/dev/null 2>/dev/null
+[ $? -gt 0 ] && tput cup 16 0 && read -n 1 -p "Erro grave ao gravar alteracoes, verifique!" ab && altera_tipo
+tput cup 16 0; read -n 1 -p "Tipo de Material Alterado com sucesso!" ab
+altera_tipo
+}
+#
+#
+#############
+# Exclui tipo
+#############
+#
+exclui_tipo() {
+cab
+echo "Exclui Tipo de Equipamento Cadastrado"
+tput cup 4 0; echo "---------------------------------------------------------------------"
+tput cup 5 0; echo "Codigo do Tipo de Material:                                          "
+tput cup 6 0; echo "Nome do Tipo de Material..:                                          "
+tput cup 7 0; echo "Descricao do Tipo.........:                                          "
+tput cup 8 0; echo "---------------------------------------------------------------------"
+tput cup 9 0; echo "< Enter=retorna > - < xx + Enter =  Lista tipos >                    "
+tput cup 10 0; echo "---------------------------------------------------------------------"
+tput cup 5 28 ; read CODT 
+[ "$CODT" == "xx" ] && lista_tipos_min && exclui_tipo
+[ "x$CODT" == "x" ] && menu
+grep -e "^$CODT:" $ARQQ 1>/dev/null 2>/dev/null
+[ $? -gt 0 ] && tput cup 11 0 && read -n 1 -p "Tipo nao cadastrado!" AB && exclui_tipo
+cut -d":" -f2 $ARQT | grep -e "$CODT" 1>/dev/null 2>/dev/null
+[ $? -eq 0 ] && tput cup 11 0 && read -n 1 -p "Impossivel excluir tipos que possuem materiais cadastrados..!!" AB && exclui_tipo
+DESCT=$(grep -e "^$CODT" $ARQQ | cut -f3 -d":"| head -1)
+NOMET=$(grep -e "^$CODT" $ARQQ | cut -f2 -d":"| head -1)
+tput cup 6 28; echo $NOMET
+tput cup 7 28; echo $DESCT
+tput cup 11 0; read -n 1 -p "Confirma exclusao <s/n>? " SN
+SN=$(echo $SN | tr [:upper:] [:lower:])
+[ $SN != "s" ] && exclui_tipo
+sed "/$CODT:$NOMET:$DESCT/d" $ARQQ > $ARQQ.$$
+[ $? -gt 0 ] && tput cup 11 0 && read -n 1 -p "Erro grave ao excluir tipo, verifique!" ab && exclui_tipo
+mv $ARQQ.$$ $ARQQ
+[ $? -gt 0 ] && tput cup 11 0 && read -n 1 -p "Erro grave ao excluir tipo, verifique!" ab && exclui_tipo
+tput cup 11 0; read -n 1 -p "Tipo de Material Excluido com sucesso!" ab
+exclui_tipo
+}
+#
+
+######
+# Inicia script
+######
+#
+menu
+
+
