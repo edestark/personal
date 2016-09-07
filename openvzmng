@@ -1,0 +1,165 @@
+#!/bin/bash
+###############################################
+# Gerenciador de Containers (VPS).            #
+# Autor: Edegard Santos                       #
+#                                             #
+# Versão 1.0 (Beta).                          #
+###############################################
+#
+########### 
+# BASHCSS #
+###########
+#
+pret='\E[0;30m'   # Black
+verm='\E[0;31m'   # Red
+verd='\E[0;32m'   # Green
+amar='\E[0;33m'   # Yellow
+azul='\E[0;34m'   # Blue
+mage='\E[0;35m'   # Magenta
+cian='\E[0;36m'   # Ciano
+bran='\E[0;37m'   # White
+bold='\033[37;4;1m' #BOLD
+noco=$(tput sgr0) # No color.
+#
+##############
+# Cabeçalhos #
+##############
+trap 'exit_fun' 1 2 3 15 20
+cab () {
+clear
+echo -e "#####################################################"
+echo -e "#                                                   #"    
+echo -e "#   Bem vindo ao Gerenciador de Suspensões 1.0      #"
+echo -e "# Caso seja realizada alteração, favor informar!    #"
+echo -e "#          Criado por: Edegard Santos               #"
+echo -e "#####################################################"
+}
+cab_lista () {
+tput cup 0 60; echo -e "-----------------------------------------------------"
+tput cup 1 60; echo -e " ${bold}Legenda.${noco}                              "                            
+tput cup 2 60; echo -e " ${verd}Verde = Running (Ativo)${noco}               "
+tput cup 3 60; echo -e " ${verm}Vermelho = Stopped (Parado/Suspenso)${noco}"                                                    
+tput cup 4 60; echo -e "-----------------------------------------------------"
+tput cup 5 60; echo -e "       Segue a lista competa de containers!          "
+tput cup 6 60; echo -e "-----------------------------------------------------"
+}
+#
+###############
+# Função Ação #
+###############
+#
+act_menu () {
+tput cup 18 0; echo -e "[ 1 ] Suspender Container"
+tput cup 19 0; echo -e "[ 2 ] Reativar Container"
+tput cup 20 0; echo -e "[ 3 ] Cancelar Container"
+tput cup 21 0; echo -e "[ 4 ] Remover Container"
+read -n 1 -p "Opção <Enter=Sair>" act
+[ "x$act" == "x" ] && clear && echo -e "Opcao invalida, saindo..." && exit 0
+case $act in
+        1) echo "vzctl set $CTID --disabled yes --offline_management no --save && vzctl stop $CTID"
+        ;;
+        2) echo "vzctl set $CTID --disabled no --offline_management yes --save && vzctl start $CTID"
+        ;;
+        3) echo "vzctl set $CTID --disalbed yes --save && vzctl stop $CTID"
+        ;;
+        4) echo "vzctl set $CTID --disabled no --save && vzctl destroy $CTID"
+        ;;
+        *) sure_ctid
+        ;;
+esac
+}
+##############################################
+# Funcção Sair, para ser adicionada ao trap. #
+##############################################
+exit_fun () {
+clear
+echo -e "Saindo..."
+exit 0
+}
+check_char () {
+   tput cup 9 21; read DOM 
+        if [ ${#DOM} -ge 1 -a ${#DOM} -lt 7 ]; then 
+   tput cup 16 0; read -n 1 -p "Digite pelo menos 7 caracteres!" && sure_ctid 
+        fi
+}
+##################################
+# Função para buscar informações #
+##################################
+sure_ctid () {
+cab
+#vzlist -a >> ARQCT.$$
+echo -e "Insira o Domínio para Buscar ID do Container"
+echo -e "Atenção, Listar todos os containers fechará o Sistema"
+tput cup 8 0; echo "-------------------------------------------------------"
+tput cup 9 0; echo "Digite o Domínio..:                                     "
+tput cup 10 0; echo "Hostname..........:                                    "
+tput cup 11 0; echo "IP Address........:                                    "
+tput cup 12 0; echo "Container ID......:                                    "
+tput cup 13 0; echo "Status............:                                    "  
+tput cup 14 0; echo " *Enter = Retorna / listctid = Lista todos Containers!*"
+tput cup 15 0; echo "-------------------------------------------------------"
+tput cup 9 21; check_char
+
+[ "x$DOM" == "x" ] && tput cup 16 0 && read -n 1 -p "Nenhum valor fornecido....<Enter=Sair>" && exit 0
+[ "$DOM" == "listctid" ] && lista_ctid
+grep $DOM ARQTT > /dev/null 2>&1
+  [ $? -gt 0 ] && lista_ctid
+
+HNAME=$(grep $DOM ARQTT | awk '{print $5}')
+IPADD=$(grep $DOM ARQTT | awk '{print $4}')
+CTID=$(grep $DOM ARQTT | awk '{print $1}')
+STATS=$(grep $DOM ARQTT | awk '{print $3}')
+
+  tput cup 10 21; echo -e "$HNAME"
+  tput cup 11 21; echo -e "$IPADD"
+  tput cup 12 21; echo -e "$CTID"
+  tput cup 13 21; echo -e "${bold}${bran}$STATS${bold}${noco}"
+tput cup 16 0; echo -e "Como deseja prosseguir?\n" && act_menu
+#rm -f ARQCT.$$
+}
+############################
+# Função Listar Containers #
+############################
+#
+lista_ctid () {
+cab_lista
+#vzlist -a >> ARQT.$$
+NL=$(tput lines)
+let NL=NL-6
+NR=7
+while read LIN
+ do
+  CTIDL=$(echo $LIN | awk '{print $1}')
+  IPL=$(echo $LIN | awk '{print $4}')
+  HNML=$(echo $LIN | awk '{print $5}')
+  STAD=$(echo $LIN | awk '{print $3}')
+  if [ "$STAD" == "running" ]
+    then
+  tput cup $NR 60; echo -e "${verd}"${CTIDL:0:5}"${noco}"
+  tput cup $NR 70; echo -e "${IPL:0:15}"
+  tput cup $NR 90; echo -e "${HNML:0:40}"
+    else
+  tput cup $NR 60; echo -e "${verm}"${CTIDL:0:5}"${noco}"
+  tput cup $NR 70; echo -e "${IPL:0:15}"
+  tput cup $NR 90; echo -e "${HNML:0:40}" 
+  fi
+  let NR++
+  if [ $NR -eq $NL ]
+   then
+     NR=7
+     tput cup $NR 70; read -n 1 -p "Tecle p/continuar..."
+     cab_lista
+  fi
+done < /root/ARQTT
+#rm -f ARQT.$$
+    tput cup $NR 70; read -n 1 -p "Tecle p/continuar..."
+sure_ctid
+}
+####################
+# Iniciar o Script #
+####################
+sure_ctid
+
+
+
+
