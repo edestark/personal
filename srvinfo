@@ -1,0 +1,160 @@
+#!/bin/bash
+trap menu 1 2 3 15 20
+SIPS=/home/edesantos/Scripts/serverips.txt
+DADS=/home/edesantos/Scripts/dadosrv.txt
+cab() {
+clear
+echo -e "Verificador de informacoes em Servidores - PI-2015"
+echo -e "\033[1mSistema para Análise de Servidores\033[0m\n"
+}
+
+cab_rede() {
+cab
+tput cup 5 0; echo "-------------------------------------------------------------------------"
+tput cup 6 0; echo "Hostname........:                                                        "           
+tput cup 7 0; echo "IPs do Servidor.:                                                        "           
+tput cup 8 0; echo "NameServer......:                                                        "           
+tput cup 9 0; echo "Interface.......:                                                        "           
+tput cup 10 0; echo "Velocidade......:                                                        "
+tput cup 11 0; echo "Ping............:                                                        "
+tput cup 12 0; echo "-------------------------------------------------------------------------"
+}
+
+cab_hard () {
+cab
+tput cup 5 0; echo "------------------------------------"
+tput cup 6 0; echo "Total CPU...:                       "                     
+tput cup 7 0; echo "CPU Clock...:                       "                     
+tput cup 8 0; echo "Proc Cache..:                       "                     
+tput cup 9 0; echo "Mem. RAM....:                       "                     
+tput cup 10 0; echo "Mem. Swap...:                      "                     
+tput cup 11 0; echo "------------------------------------"
+}
+
+cab_part () {
+cab
+tput cup 5 0; echo "---------------------------------------------------------------------------------------------------------------------------------------"
+tput cup 6 0; echo "Total   Dispositivos             Tamanho           FileSystem          Total em Uso        Total Livre         Montado Em              "
+tput cup 7 0; echo "---------------------------------------------------------------------------------------------------------------------------------------"
+#Total           Dispositivos                 Tamanho               FileSystem          Total em Uso        Total Livre
+#---------------------------------------------------------------------------------------------------------------------------
+}
+
+server_ip() {
+cab
+tput cup 5 0; echo "------------------------------------------------"
+tput cup 6 0; echo "Digite o IP do Servidor:                        "
+tput cup 7 0; echo "------------------------------------------------"
+}
+###############
+# System Menu #                                                                                                     
+###############                                                                                                     
+#
+#
+menu() {                                                                                                            
+cab                                                                                                                 
+echo -e "[ 1 ] Informações de rede"                                                                                 
+echo -e "[ 2 ] Informações de Hardware (RAM/CPU)"                                                                   
+echo -e "[ 3 ] Informações de Disco (Partições)"                                                                    
+echo -e "[ 4 ] Informações de processamento\n"                                                                      
+read -n 1 -p "Opcao: <Enter=sair>" opc                                                                              
+[ "x$opc" == "x" ] && clear && echo -e "\nSistema encerrado!\n" && exit 0                                           
+case $opc in                                                                                                        
+   1) info_rede
+      ;;
+   2) info_hard
+      ;;
+   3) info_part
+      ;;
+   4) info_proc
+      ;;
+   *) menu
+      ;;
+esac
+}
+#
+#
+info_rede() {
+cab_rede
+#while read ips
+# do
+HT=$(ssh rafaeli@192.168.0.112 hostname)
+IP=$(ssh rafaeli@192.168.0.112 hostname -I)
+NS=$(ssh rafaeli@192.168.0.112 cat /etc/resolv.conf | grep -v "#" | grep -v search | awk '{print $2}' | xargs -n10)
+INT=$(ssh rafaeli@192.168.0.112 ls /etc/sysconfig/network-scripts/ | grep ifcfg | grep -v "lo" | cut -d"-" -f2 | head -1)
+AVICMP=$(ping -qn -c3 localhost | egrep "^rtt" | cut -f5 -d"/")
+SPD=$(ssh rafaeli@192.168.0.112 ethtool $INT 2>/dev/null | grep Speed | cut -d: -f2) 
+DPLX=$(ssh rafaeli@192.168.0.112 ethtool $INT 2>/dev/null| grep Duplex | cut -d: -f2) 
+#
+tput cup 6 20; echo "$HT"
+tput cup 7 20; echo "$IP"
+tput cup 8 20; echo "$NS"
+tput cup 9 20; echo "$INT"
+tput cup 10 19; echo "${SPD}, Duplex:${DPLX}"
+tput cup 11 20; echo "$AVICMP"
+#
+[ $? -gt 0 ] && tput cup 13 0 && read -n 1 -p "Erro grave ao armazenar valor" er
+tput cup 13 0; read -n 1 -p "Tecle p/ continuar..." ex
+menu
+}
+#
+info_hard () {
+cab_hard
+HT=$(hostname)
+NCPU=$(cat /proc/cpuinfo | grep processor | wc -l)
+CLK=$(grep "cpu MHz" /proc/cpuinfo | awk '{print $4}' | head -1)
+CHC=$(grep cache /proc/cpuinfo | awk '{print $4,$5}' | head -1)
+MEM=$(free -h | grep Mem | awk '{print $2}')
+SWP=$(free -h | grep Swap | awk '{print $2}')
+#
+tput cup 6 15; echo "$NCPU"
+tput cup 7 15; echo "$CLK"
+tput cup 8 15; echo "$CHC"
+tput cup 9 15; echo "$MEM"
+tput cup 10 15; echo "$SWP"
+#
+[ $? -gt 0 ] && tput cup 13 0 && read -n 1 -p "Erro grave ao armazenar valor" er
+tput cup 13 0; read -n 1 -p "Tecle p/ continuar..." ex
+menu
+}
+#
+info_part () {
+#cab_part
+#
+clear
+echo -e "Segue abaixo as informações do servidor"
+df -hT > part.$$
+echo -e "\n"
+cat part.$$
+echo -e "\n"
+read -n 1 -p "Tecle p/continuar..."
+rm -f part.$$
+menu
+
+}
+#
+info_proc () {
+cab
+ALU=$(cut -d":" -f4 /etc/passwd | egrep "^....$")
+#
+ps aux --sort=-pcpu | head -11 > proc.$$
+#
+echo -e "\nOs Ids de usuários são $ALU"
+echo -e "\nOs maiores processos são\n"
+cat proc.$$
+read -n 1 -p "Tecle p/continuar..."
+rm -f proc.$$
+menu
+}
+
+
+#Start
+server_ip
+tput cup 6 24; read IP
+[ "x"IP == "x" ] && echo "IP Inválido"
+ping -n1 $IP 1>/dev/null 2>/dev/null
+[ $? -gt 0 ] && tput cup 6 24 && read -n 1 -p "Servidor nao alcancado! Saindo..." ab && exit 0
+tput cup 8 0; read -n 1 -p "Tecle p/ continuar" ZX
+menu
+
+
