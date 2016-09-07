@@ -1,0 +1,319 @@
+#!/bin/bash
+#
+# Script para Cadastrar materiais
+# 
+#
+trap 'menu'  1 2 3 15 20
+ARQT=/temp/sismat/tiposmat.dat
+ARQQ=/temp/sismat/tipos.dat
+cab() {
+clear
+echo -e "Sistema de Cadastros - SISMAT"
+echo -e "\033[1mCadastro de Materiais \033[0m\n"
+}
+cab_lista() {
+cab
+echo -e "Lista de Materiais Cadastrados"
+tput cup 4 0; echo "-------------------------------------------------------------------------------------------------------------------------------------"
+tput cup 5 0; echo "Codigo    Nome do Tipo                 Nome  do Material          Fabricante         Preco               Patrimonio                  "            
+tput cup 6 0; echo "-------------------------------------------------------------------------------------------------------------------------------------"            
+}                                                                                                                                                                     
+cab_listamin() {                                                                                                                                                      
+tput cup 4 70; echo "--------------------------------------------------"                                                                                              
+tput cup 5 70; echo "Codigo            Nome            Descricao       "                                                                                              
+tput cup 6 70; echo "--------------------------------------------------"                                                                                              
+}                                                                                                                                                                     
+cab_listamin_mat() {
+tput cup 4 70; echo "--------------------------------------------------"                                                                                              
+tput cup 5 70; echo "Codigo            Nome            Descricao       "                                                                                              
+tput cup 6 70; echo "--------------------------------------------------"                                                                                              
+}
+#                                                                                                                                                                      
+#                                                                                                                                                                     
+##################                                                                                                                                                              
+# Menu do sistema#
+#i################
+menu() {
+cab
+echo -e "[ 1 ] Cadastra Novo Equipamento"
+echo -e "[ 2 ] Listar Equipamentos cadastrados"
+echo -e "[ 3 ] Alterar Equipamento"
+echo -e "[ 4 ] Exclui Equipamento"
+echo -e "[ 5 ] Cadastro de Tipos\n"
+read -n 1 -p "Opcao: <Enter=sair>" opc
+[ "x$opc" == "x" ] && clear && echo -e "\nSistema encerrado!\n" && exit 0
+case $opc in
+   1) cad_mat
+      ;;
+   2) lista_mat
+      ;;
+   3) altera_mat
+      ;;
+   4) exclui_mat
+      ;;
+   5) ./cdtip.sh
+      menu
+      ;; 
+   *) menu
+      ;;
+esac
+}
+#
+#############
+# Cadastra tipos
+#############
+#
+cad_mat() {
+cab
+echo -e "Cadastra Novo Material "
+echo -e "OBS: Utilize abreviacoes na Descrição."
+tput cup 4 0; echo "---------------------------------------------------------------------"
+tput cup 5 0; echo "Codigo do tipo..........:        <Enter=retorna xx=Lista tipos>      "
+tput cup 6 0; echo "Descricao do Tipo.......:                                            "
+tput cup 7 0; echo "Nome do Material........:                                            "  
+tput cup 8 0; echo "Fabricante do Material..:                                            "
+tput cup 9 0; echo "Preço do Material.......:                                            "
+tput cup 10 0; echo "Numero Patrimonial......:                                            "
+tput cup 11 0; echo "--------------------------------------------------------------------"
+tput cup 5 26; read CODT
+[ "x$CODT" == "x" ] && menu
+[ "$CODT" == "xx" ] && lista_tipos_min && cad_mat
+cut -f1 -d":" $ARQQ | grep "$CODT" 1>/dev/null 2>/dev/null
+[ $? -gt 0 ] && tput cup 13 0 && read -n 1 -p "Tipo Inexistente!" AB && cad_mat
+DESCT=$(grep "^$CODT:" $ARQQ | cut -f3 -d":")
+tput cup 6 26; echo $DESCT
+tput cup 7 26; read NOMAT
+[ "x$NOMAT" == "x" ] && tput cup 14 0 && read -n 1 -p "Nome inválido" AB && cad_mat
+tput cup 8 26; read FABCT
+[ "x$FABCT" == "x" ] && tput cup 14 0 && read -n 1 -p "Fabricante Invalido!" AB && cad_mat
+tput cup 9 26; read PRECT
+[ "x$PRECT" == "x" ] && tput cup 14 0 && read -n 1 -p "Preco Invalido!" AB && cad_mat
+tput cup 10 26; read NUPAT
+[ "x$NUPAT" == "x" ] && tput cup 14 0 && read -n 1 -p "Patrimonio Invalido!" AB && cad_mat
+tput cup 12 0; read -n 1 -p "Confirma <s/n>? " SN
+xn=$(echo $SN | tr [:upper:] [:lower:])
+[ ! "$xn" == "s" ] && cad_mat
+CMAX=$(cut -f1 -d":" $ARQT | sort -n | tail -1)
+[ "x$CMAX" == "x" ] && CMAX=0
+let CMAX++
+echo "${CMAX}:${CODT}:${NOMAT}:${FABCT}:${PRECT}:${NUPAT}" >> $ARQT
+[ $? -gt 0 ] && tput cup 9 0 && read -n 1 -p "Erro grave cadastrar material, verifique!" ab && cad_mat
+tput cup 14 0; read -n 1 -p "Novo Tipo de Material cadastrado com sucesso!" ab
+cad_mat
+}
+#
+#
+#############
+# Lista tipos
+#############
+#
+lista_mat() {
+cab_lista
+NL=$(tput lines)
+let NL=NL-6
+NR=7
+REG=$(sed "/^#/d" $ARQT | sort -n | tr " " "_")
+for i in $REG
+ do
+  CT=$(echo $i | cut -f1 -d":"| tr "_" " ")
+  TP=$(echo $i | cut -f2 -d":"| tr "_" " ")
+  TP=$(grep "^$TP:" $ARQQ | cut -f3 -d":")
+  NM=$(echo $i | cut -f3 -d":"| tr "_" " ")
+  FB=$(echo $i | cut -f4 -d":"| tr "_" " ")
+  PR=$(echo $i | cut -f5 -d":"| tr "_" " ")
+  NP=$(echo $i | cut -f6 -d":"| tr "_" " ")
+  tput cup $NR 2; echo ${CT}
+  tput cup $NR 10; echo ${TP:0:20}
+  tput cup $NR 39; echo ${NM:0:20}
+  tput cup $NR 66; echo ${FB:0:20}
+  tput cup $NR 85; echo "R$" ${PR:0:10}
+  tput cup $NR 105; echo ${NP:0:12}
+  let NR++ 
+  if [ $NR -eq $NL ]
+   then
+     NR=7
+     read -n 1 -p "Tecle p/continuar..."
+     cab_lista
+  fi
+done
+read -n 1 -p "Tecle p/continuar..."
+menu
+}
+##################
+# Lista tipos_min#
+##################
+#
+lista_tipos_min() {
+cab_listamin
+NL=$(tput lines)
+let NL=NL-6
+NR=7
+REG=$(sed "/^#/d" $ARQQ | sort -n | tr " " "_")
+for i in $REG
+ do
+  CT=$(echo $i | cut -f1 -d":"| tr "_" " ")
+  NM=$(echo $i | cut -f2 -d":"| tr "_" " ")
+  DE=$(echo $i | cut -f3 -d":"| tr "_" " ")
+
+  tput cup $NR 70; echo ${CT}
+  tput cup $NR 88; echo ${NM:0:10}
+  tput cup $NR 100; echo ${DE:0:16}
+  let NR++ 
+  if [ $NR -eq $NL ]
+   then
+     NR=7
+     tput cup $NR 70; read -n 1 -p "Tecle p/continuar..."
+     cab_listamin
+  fi
+done
+tput cup $NR 70; read -n 1 -p "Tecle p/continuar..."
+}
+###################
+#  Lista Mat_min  #
+###################
+#
+lista_mat_min() {
+cab_listamin
+NL=$(tput lines)
+let NL=NL-6
+NR=7
+REG=$(sed "/^#/d" $ARQT | sort -n | tr " " "_")
+for i in $REG
+ do
+  CT=$(echo $i | cut -f1 -d":"| tr "_" " ")
+  NM=$(echo $i | cut -f3 -d":"| tr "_" " ")
+  FB=$(echo $i | cut -f3 -d":"| tr "_" " ")
+
+  tput cup $NR 70; echo ${CT}
+  tput cup $NR 88; echo ${NM:0:10}
+  tput cup $NR 100; echo ${DE:0:16}
+  let NR++
+  if [ $NR -eq $NL ]
+   then
+     NR=7
+     tput cup $NR 70; read -n 1 -p "Tecle p/continuar..."
+     cab_listamin
+  fi
+done
+tput cup $NR 70; read -n 1 -p "Tecle p/continuar..."
+}
+##############
+# Altera Mat #
+##############
+#
+altera_mat() {
+cab
+echo -e "Altera Equipamento Cadastrado"
+tput cup 4 0; echo "---------------------------------------------------------------------"
+tput cup 5 0; echo "Codigo do Material........:                                          "
+tput cup 6 0; echo "Nome do Tipo de Material..:                                          "
+tput cup 7 0; echo "Descricao do Tipo.........:                                          "
+tput cup 8 0; echo "Nome do Material..........:                                          "
+tput cup 9 0; echo "Fabricante................:                                          "
+tput cup 10 0; echo "Preco.....................:                                          "
+tput cup 11 0; echo "Patrimonio................:                                          "  
+tput cup 12 0; echo "---------------------------------------------------------------------"
+tput cup 13 0; echo "< Enter=retorna > - < xx + Enter =  Lista tipos >                    "
+tput cup 14 0; echo "---------------------------------------------------------------------"
+tput cup 5 27 ; read CODT
+[ "x$CODT" == "x" ] && menu
+[ "$CODT" == "xx" ] && lista_mat_min && altera_mat
+cut -f1 -d":" $ARQT | grep "$CODT"| head -1 1>/dev/null 2>/dev/null
+[ $? -gt 0 ] && tput cup 15 0 && read -n 1 -p "Material nao cadastrado!" AB && altera_mat
+CDGTP=$(grep "^$CODT:" $ARQT | cut -d":" -f2 | head -1)
+NOMET=$(grep -e "^$CDGTP:" $ARQQ | cut -f2 -d":" | head -1)
+tput cup 6 27; echo $NOMET
+DESCT=$(grep "^$CDGTP:" $ARQQ | cut -f3 -d":" | head -1)
+tput cup 7 27; echo $DESCT
+NOMAT=$(grep -e "^$CODT:" $ARQT | cut -f3 -d":" | head -1)
+tput cup 8 27; echo $NOMAT
+FABCT=$(grep -e "^$CODT:" $ARQT | cut -f4 -d":" | head -1)
+tput cup 9 27; echo $FABCT
+PRECT=$(grep -e "^$CODT:" $ARQT | cut -f5 -d":" | head -1)
+tput cup 10 27; echo $PRECT
+NUPAT=$(grep -e "^$CODT:" $ARQT | cut -f6 -d":" | head -1)
+tput cup 11 27; echo $NUPAT
+#
+tput cup 15 0; echo "Tipo de Material.......: "$NOMET"                                    "
+tput cup 16 0; echo "Descricao do Tipo......: "$DESCT"                                    "
+tput cup 17 0; echo "Novo Nome do Material..:                                             "
+tput cup 18 0; echo "Novo Fabricante........:                                             "
+tput cup 19 0; echo "Novo Preco.............:                                             "
+tput cup 20 0; echo "Novo Patrimonio........:                                             "
+tput cup 21 0; echo "---------------------------------------------------------------------"
+tput cup 22 0; echo "< Enter=retorna >                                                    "
+tput cup 23 0; echo "---------------------------------------------------------------------"
+tput cup 17 25; read NOMATN
+[ "x$NOMATN" == "x" ] && tput cup 23 0 && read -n 1 -p "Nome Invalido!" AB && altera_mat
+tput cup 18 25; read FABCTN
+[ "x$FABCTN" == "x" ] && tput cup 23 0 && read -n 1 -p "Fabricante invalido!" AB && altera_mat
+tput cup 19 25; read PRECTN
+[ "x$PRECTN" == "x" ] && tput cup 23 0 && read -n 1 -p "Valor invalido!" AB && altera_mat
+tput cup 20 25; read NUPATN
+[ "x$NUPATN" == "x" ] && tput cup 23 0 && read -n 1 -p "Patrimonio invalido!" AB && altera_mat
+tput cup 24 0; read -n 1 -p "Confirma <s/n>? " SN
+SN=$(echo $SN | tr [:upper:] [:lower:])
+[ $SN != "s" ] && altera_mat
+cat $ARQT | sed "/$CODT:$CDGTP:$NOMAT:$FABCT:$PRECT:$NUPAT/d" > $ARQT.$$
+echo "$CODT:${CDGTP}:${NOMATN}:${FABCTN}:${PRECTN}:${NUPATN}" >> $ARQT.$$
+[ $? -gt 0 ] && tput cup 24 0 && read -n 1 -p "Erro grave ao alterar tipo, verifique!" ab && altera_mat
+cat $ARQT.$$ | sort -n > $ARQT
+[ $? -gt 0 ] && tput cup 24 0 && read -n 1 -p "Erro grave ao alterar tipo, verifique!" ab && altera_mat
+rm -rf $ARQT.$$ 1>/dev/null 2>/dev/null
+[ $? -gt 0 ] && tput cup 24 0 && read -n 1 -p "Erro grave ao gravar alteracoes, verifique!" ab && altera_mat
+tput cup 24 0; read -n 1 -p "Tipo de Material Alterado com sucesso!" ab
+altera_mat
+}
+#
+#
+#############
+# Exclui tipo
+#############
+#
+exclui_mat() {
+cab
+echo "Exclui Equipamento Cadastrado"
+tput cup 4 0; echo "---------------------------------------------------------------------"
+tput cup 5 0; echo "Codigo do Tipo de Material:                                          "
+tput cup 6 0; echo "Nome do Tipo de Material..:                                          "
+tput cup 7 0; echo "Descricao do Tipo.........:                                          "
+tput cup 8 0; echo "Nome do Material..........:                                          "
+tput cup 9 0; echo "Fabricante................:                                          "
+tput cup 10 0; echo "Preco.....................:                                          "
+tput cup 11 0; echo "Patrimonio................:                                          "
+tput cup 12 0; echo "---------------------------------------------------------------------"
+tput cup 13 0; echo "< Enter=retorna > - < xx + Enter =  Lista tipos >                    "
+tput cup 14 0; echo "---------------------------------------------------------------------"
+tput cup 5 28 ; read CODT 
+[ "$CODT" == "xx" ] && lista_mat_min && exclui_mat
+[ "x$CODT" == "x" ] && menu
+grep -e "^$CODT:" $ARQT 1>/dev/null 2>/dev/null
+[ $? -gt 0 ] && tput cup 14 0 && read -n 1 -p "Tipo nao cadastrado!" AB && exclui_mat
+CDGTP=$(grep "^$CODT:" $ARQT | cut -d":" -f2 | head -1)
+DESCT=$(grep -e "^$CDGTP:" $ARQQ | cut -f3 -d":" | head -1)
+NOMET=$(grep -e "^$CDGTP:" $ARQQ | cut -f2 -d":" | head -1)
+NOMAT=$(grep -e "^$CODT" $ARQT | cut -f3 -d":"| head -1)
+FABCT=$(grep -e "^$CODT" $ARQT | cut -f4 -d":"| head -1)
+PRECT=$(grep -e "^$CODT" $ARQT | cut -f5 -d":"| head -1)
+NUPAT=$(grep -e "^$CODT" $ARQT | cut -f6 -d":"| head -1)
+tput cup 6 28; echo $NOMET
+tput cup 7 28; echo $DESCT
+tput cup 8 28; echo $NOMAT
+tput cup 9 28; echo $FABCT
+tput cup 10 28; echo $PRECT
+tput cup 11 28; echo $NUPAT
+tput cup 15 0; read -n 1 -p "Confirma exclusao <s/n>? " SN
+SN=$(echo $SN | tr [:upper:] [:lower:])
+[ $SN != "s" ] && exclui_mat
+sed -i "/^$CODT:$CDGTP:$NOMAT:/d" $ARQT 
+[ $? -gt 0 ] && tput cup 15 0 && read -n 1 -p "Erro grave ao excluir tipo, verifique!" ab && exclui_mat
+tput cup 15 0; read -n 1 -p "Tipo de Material Excluido com sucesso!" ab
+exclui_mat
+}
+#
+
+######
+# Inicia script
+######
+#
+menu
