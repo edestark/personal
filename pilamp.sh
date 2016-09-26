@@ -88,7 +88,7 @@ cab
 #Importando a chave GNU Privacy Guard (GPG)
 #
 echo -e "Importando a chave ${bold}GPG${rese}"
-echo "rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY*"
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY*
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro ao importar chave${rese}"
   else 
@@ -98,7 +98,7 @@ fi
 #Adicionando os repositórios EPEL
 #
 echo -e "Adicionando os repositorios ${bold}EPEL${rese}"
-echo "yum -y install epel-release > /dev/null 2>&1"
+yum -y install epel-release > /dev/null 2>&1
 if [ $? -gt 0 ]; then
  echo -e "${verm}Erro na instalacao${rese}"
   else
@@ -109,7 +109,7 @@ fi
 #
 fase1
 echo -e "Instalando o banco de dados ${bold}(MariaDB)${rese}"
-echo -e "yum -y install mariadb-server mariadb > /dev/null 2>&1"
+yum -y install mariadb-server mariadb > /dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na instalacao${rese}"
    else
@@ -133,7 +133,7 @@ mysql_secure_installation
 #
 fase2
 echo -e "Instalando o servidor web ${bold}Apache2${rese}"
-echo -e "yum -y install httpd > /dev/null 2>&1"
+yum -y install httpd > /dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na instalacao${rese}"
    else
@@ -153,12 +153,13 @@ fi
 # CONFIGURACAO INICIAL DO FIREWALL (LIBERAR APACHE).
 #
 echo -e "Instalando ${bold}Firewall-CMD${rese}"
-echo -e "yum -y install firewalld.noarch > /dev/null 2>&1"
+yum -y install firewalld.noarch > /dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na instalacao${rese}"
    else
 echo -e "${verd}OK!${rese}"
 echo -e "Adicionando as regras de liberação ${bold}HTTP e HTTPS${rese}"
+
 firewall-cmd --permanent --zone=public --add-service=http 
 firewall-cmd --permanent --zone=public --add-service=https
 firewall-cmd --reload
@@ -168,14 +169,14 @@ fi
 #
 fase3
 echo -e "Instalando o ${bold}PHP 5.4.16${rese}"
-echo -e "yum -y install php > /dev/null 2>&1"
+yum -y install php > /dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na instalacao${rese}"
    else
 echo -e "${verd}OK!${rese}"
 fi
 echo -e "Reiniciando o Apache..."
-echo -e "systemctl restart httpd.service"
+systemctl restart httpd.service
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na inicializacao${rese}"
    else
@@ -191,7 +192,7 @@ if [ $? -gt 0 ]; then
   echo -e "${verm}Falha ao escrever no arquivo${rese}"
    else
 echo -e "${verd}Codigo Adicionado${rese}"
-echo -e "Teste o php em ${blue}http://$(hostname -i)/info.php${rese}"
+echo -e "Teste o php em ${cian}http://$(hostname -i)/info.php${rese}"
 fi
 #
 # INSTALANDO OS MODULOS PHP-MYSQL
@@ -199,21 +200,21 @@ fi
 fase5
 echo -e "Instalando o ${bold}PHP-MySQL e CMS Modules${rese}"
 echo -e "Passo 1, PHP-MySQL"
-echo -e "yum -y install php-mysql"
+yum -y install php-mysql > /dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na instalacao${rese}"
    else
 echo -e "${verd}OK!${rese}"
 fi
 echo -e "Passo 2, CMS Modules"
-echo -e "yum -y install php-gd php-ldap php-odbc php-pear php-xml php-xmlrpc php-mbstring php-snmp php-soap curl curl-devel"
+yum -y install php-gd php-ldap php-odbc php-pear php-xml php-xmlrpc php-mbstring php-snmp php-soap curl curl-devel > /dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na instalacao${rese}"
    else
 echo -e "${verd}OK!${rese}"
 fi
 echo -e "Reiniciando o Apache..."
-echo -e "systemctl restart httpd.service"
+systemctl restart httpd.service
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na inicializacao${rese}"
    else
@@ -224,7 +225,7 @@ fi
 #
 fase6
 echo -e "Instalando o ${bold}PhpMyAdmin${rese}"
-echo -e "yum -y install phpMyAdmin > /dev/null 2>&1"
+yum -y install phpMyAdmin > /dev/null 2>&1
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na instalacao${rese}"
    else
@@ -234,7 +235,7 @@ fi
 echo -e "Lembre-se de modificar os arquivos /etc/phpMyAdmin/config.inc.php & /etc/httpd/conf.d/phpMyAdmin.conf"
 #
 echo -e "Reiniciando o Apache..."
-echo -e "systemctl restart httpd.service"
+systemctl restart httpd.service
 if [ $? -gt 0 ]; then
   echo -e "${verm}Erro na inicializacao${rese}"
    else
@@ -243,4 +244,3 @@ fi
 echo -e "${cian}Instalação Finalizada...${rese}"
 echo -e "${bold}${bran}Tecle para sair${rese}"
 read -n 1 -p "" AB && exit 0
-
