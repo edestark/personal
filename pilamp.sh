@@ -81,6 +81,21 @@ echo -e "                   INICIANDO FASE 6                      "
 echo -e "                Instalando ${bold}PhpMyAdmin${rese}      "
 echo -e "---------------------------------------------------------"
 }
+
+chkinst() {
+if [ $? -gt 0 ]; then
+ echo -e "${verm}Erro na instalacao${rese}"
+  else
+  echo -e "${verd}OK!${rese}"
+fi
+}
+chkinit() {
+if [ $? -gt 0 ]; then
+  echo -e "${verm}Erro na inicializacao${rese}"
+   else
+   echo -e "${verd}OK!${rese}"
+fi
+}
 #
 cab
 #
@@ -99,22 +114,14 @@ fi
 #
 echo -e "Adicionando os repositorios ${bold}EPEL${rese}"
 yum -y install epel-release > /dev/null 2>&1
-if [ $? -gt 0 ]; then
- echo -e "${verm}Erro na instalacao${rese}"
-  else
-  echo -e "${verd}OK!${rese}"
-fi
+chkinst
 #
 #Instalando o banco de dados (MariaDB)
 #
 fase1
 echo -e "Instalando o banco de dados ${bold}(MariaDB)${rese}"
 yum -y install mariadb-server mariadb > /dev/null 2>&1
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na instalacao${rese}"
-   else
-   echo -e "${verd}OK!${rese}"
-fi
+chkinst
 #
 #INCIANDO SERVICOS, CONFIGURANDO INICIALIZACAO.
 #
@@ -134,21 +141,13 @@ mysql_secure_installation
 fase2
 echo -e "Instalando o servidor web ${bold}Apache2${rese}"
 yum -y install httpd > /dev/null 2>&1
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na instalacao${rese}"
-   else
-   echo -e "${verd}OK!${rese}"
-fi
+chkinst
 #
 # INCIANDO O SERVICO E CONFIGURANDO A INICIALIZACAO
 #
 systemctl start httpd.service
 systemctl enable httpd.service
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na inicializacao${rese}"
-   else
-   echo -e "${verd}OK!${rese}"
-fi
+chkinit
 #
 # CONFIGURACAO INICIAL DO FIREWALL (LIBERAR APACHE).
 #
@@ -161,11 +160,7 @@ echo -e "${verd}OK!${rese}"
 echo -e "Adicionando as regras de liberação ${bold}HTTP e HTTPS${rese}"
 systemctl start firewalld.service
 systemctl enable firewalld.service
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na inicializacao${rese}"
-   else
-   echo -e "${verd}OK!${rese}"
-fi
+chkinit
 firewall-cmd --permanent --zone=public --add-service=http 
 firewall-cmd --permanent --zone=public --add-service=https
 firewall-cmd --reload
@@ -176,18 +171,10 @@ fi
 fase3
 echo -e "Instalando o ${bold}PHP 5.4.16${rese}"
 yum -y install php > /dev/null 2>&1
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na instalacao${rese}"
-   else
-echo -e "${verd}OK!${rese}"
-fi
+chkinst
 echo -e "Reiniciando o Apache..."
 systemctl restart httpd.service
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na inicializacao${rese}"
-   else
-   echo -e "${verd}OK!${rese}"
-fi
+chkinit
 #
 # VERIFICACAO DA VERSAO PHP
 #
@@ -207,46 +194,26 @@ fase5
 echo -e "Instalando o ${bold}PHP-MySQL e CMS Modules${rese}"
 echo -e "Passo 1, PHP-MySQL"
 yum -y install php-mysql > /dev/null 2>&1
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na instalacao${rese}"
-   else
-echo -e "${verd}OK!${rese}"
-fi
+chkinst
 echo -e "Passo 2, CMS Modules"
 yum -y install php-gd php-ldap php-odbc php-pear php-xml php-xmlrpc php-mbstring php-snmp php-soap curl curl-devel > /dev/null 2>&1
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na instalacao${rese}"
-   else
-echo -e "${verd}OK!${rese}"
-fi
+chkinst
 echo -e "Reiniciando o Apache..."
 systemctl restart httpd.service
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na inicializacao${rese}"
-   else
-   echo -e "${verd}OK!${rese}"
-fi
+chkinit
 #
 # INSTALANDO O PHPMYADMIN
 #
 fase6
 echo -e "Instalando o ${bold}PhpMyAdmin${rese}"
 yum -y install phpMyAdmin > /dev/null 2>&1
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na instalacao${rese}"
-   else
-echo -e "${verd}OK!${rese}"
-fi
+chkinst
 #
 echo -e "Lembre-se de modificar os arquivos /etc/phpMyAdmin/config.inc.php & /etc/httpd/conf.d/phpMyAdmin.conf"
 #
 echo -e "Reiniciando o Apache..."
 systemctl restart httpd.service
-if [ $? -gt 0 ]; then
-  echo -e "${verm}Erro na inicializacao${rese}"
-   else
-   echo -e "${verd}OK!${rese}"
-fi
+chkinit
 echo -e "${cian}Instalação Finalizada...${rese}"
 echo -e "${bold}${bran}Tecle para sair${rese}"
 read -n 1 -p "" AB && exit 0
