@@ -159,7 +159,13 @@ if [ $? -gt 0 ]; then
    else
 echo -e "${verd}OK!${rese}"
 echo -e "Adicionando as regras de liberação ${bold}HTTP e HTTPS${rese}"
-
+systemctl start firewalld.service
+systemctl enable firewalld.service
+if [ $? -gt 0 ]; then
+  echo -e "${verm}Erro na inicializacao${rese}"
+   else
+   echo -e "${verd}OK!${rese}"
+fi
 firewall-cmd --permanent --zone=public --add-service=http 
 firewall-cmd --permanent --zone=public --add-service=https
 firewall-cmd --reload
