@@ -198,7 +198,7 @@ if [ $? -gt 0 ]; then
   echo -e "${verm}Falha ao escrever no arquivo${rese}"
    else
 echo -e "${verd}Codigo Adicionado${rese}"
-echo -e "Teste o php em ${cian}http://$(hostname -i)/info.php${rese}"
+echo -e "Teste o php em ${cian}http://$(ip addr | grep inet | grep enp0s3 | awk -F" " '{print $2}'| sed -e 's/\/.*$//')/info.php${rese}"
 fi
 #
 # INSTALANDO OS MODULOS PHP-MYSQL
