@@ -31,12 +31,12 @@ cab
 # Tests if file heloblocks already exists, also creating the file and adding the string if it doesn't.
 if [ ! -f /etc/heloblocks ]; then 
 	echo -e "O arquivo ainda não existe, criando...\n";
-		echo "ylmf-pc" >> /etc/heloblocks > /dev/null 2>&1
+		echo "ylmf-pc" >> /etc/heloblocks
 			echo -e "${verd}[OK]${rese}\n"
 else
-	echo "O arquivo já existe, adicionando o bot ylmf-pc... (Se não existir).\n"
+	echo -e "O arquivo já existe, adicionando o bot ylmf-pc... (Se não existir).\n"
 		grep --color "ylmf-pc" /etc/heloblocks
-			[ $? -gt 0 ] && echo "ylmf-pc" >> /etc/heloblocks
+			[ $? -gt 0 ] && echo ylmf-pc >> /etc/heloblocks
 fi
 # Tests the if the ACL file exits, and creates with the string if it doesn't exists.
 if [ ! -f /usr/local/cpanel/etc/exim/acls/ACL_SMTP_HELO_BLOCK/custom_begin_smtp_helo ]; then
