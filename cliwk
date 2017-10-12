@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# COMAND LINE INTERFACE WIKI
+#
+# Criado por: Edegard Santos.
+# 06/10/2016
+#
+#
+## BASHCSS
+BLACK='\E[0;30m'   # PRETO
+BOLD='\033[37;4;1m' # NEGRITO
+UND='\033[37;4m' # SUBLINHADO
+RED='\033[00;31m' # VERMELHO
+GREEN='\033[00;32m' # VERDE
+YELLOW='\033[00;33m' # AMARELO
+BLUE='\033[00;34m' # AZUL
+PURPLE='\033[00;35m' # ROXO
+CYAN='\033[00;36m' # CIANO
+LIGHTGRAY='\033[00;37m' # CINZA CLARO
+LRED='\033[01;31m' # VERMELHO CLARO
+LGREEN='\033[01;32m' # VERDE CLARO
+LYELLOW='\033[01;33m' # AMARELO CLARO
+LBLUE='\033[01;34m' # AZUL CLARO
+LPURPLE='\033[01;35m' # ROXO CLARO
+LCYAN='\033[01;36m' # CIANO CLARO
+WHITE='\033[01;37m' # BRANCO
+RESE=$(tput sgr0) # SEM COR
+#
+# Cabeçalho
+#
+cab() {
+clear
+printf "##############################################
+      ${LYELLOW}COMMAND ${LBLUE}LINE ${LYELLOW}INTERFACE ${LBLUE}WIKI (HGBR)${RESE}
+##############################################\n"
+}
+#
+cab
